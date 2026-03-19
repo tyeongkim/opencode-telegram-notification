@@ -85,10 +85,50 @@ const plugin: Plugin = async ({ client }) => {
 				}
 			}
 
+			let lastAssistantText = "";
+			if (sessionID && event.type === "session.idle") {
+				try {
+					const messagesRes = await client.session.messages({
+						path: { id: sessionID },
+						query: { limit: 10 },
+					});
+					const messages = messagesRes.data;
+					if (messages) {
+						for (let i = messages.length - 1; i >= 0; i--) {
+							const msg = messages[i];
+							if (msg !== undefined && msg.info.role === "assistant") {
+								const textParts = msg.parts
+									.filter(
+										(p): p is Extract<typeof p, { type: "text" }> =>
+											p.type === "text",
+									)
+									.map((p) => p.text)
+									.join("");
+								if (textParts.length > 0) {
+									lastAssistantText = textParts;
+								}
+								break;
+							}
+						}
+					}
+				} catch {
+					await client.app.log({
+						body: {
+							service: "telegram-notification",
+							level: "error",
+							message: `Failed to fetch messages for session ${sessionID}`,
+						},
+					});
+				}
+			}
+
 			let message: string;
 
 			if (event.type === "session.idle") {
 				message = `🔔 Session idle — waiting for input (${label})`;
+				if (lastAssistantText.length > 0) {
+					message += `\n\n💬 Last response:\n${lastAssistantText}`;
+				}
 			} else if (event.type === "permission.updated") {
 				message = `⚠️ Permission requested (${label})`;
 			} else {
