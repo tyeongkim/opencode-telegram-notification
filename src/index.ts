@@ -1,3 +1,5 @@
+import type { Plugin } from "@opencode-ai/plugin";
+
 const TELEGRAM_MAX_LENGTH = 4096;
 
 async function sendTelegramMessage(token: string, chatId: string, text: string): Promise<void> {
@@ -21,3 +23,53 @@ async function sendTelegramMessage(token: string, chatId: string, text: string):
 
   throw new Error(`Telegram API failed for chat ${chatId}`);
 }
+
+const plugin: Plugin = async ({ client }) => {
+  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const chatId = process.env["TELEGRAM_CHAT_ID"];
+
+  if (!token || !chatId) {
+    await client.app.log({
+      body: {
+        service: "telegram-notification",
+        level: "warn",
+        message: "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — notifications disabled",
+      },
+    });
+
+    return {};
+  }
+
+  return {
+    event: async ({ event }) => {
+      const props = event.properties as Record<string, unknown>;
+      const sessionID = props?.sessionID as string | undefined;
+
+      let message: string | undefined;
+
+      if (event.type === "session.idle") {
+        message = `🔔 Session idle — waiting for input${sessionID ? ` (${sessionID})` : ""}`;
+      } else if (event.type === "permission.updated") {
+        message = `⚠️ Permission requested${sessionID ? ` (${sessionID})` : ""}`;
+      } else if (event.type === "session.error") {
+        message = `❌ Session error${sessionID ? ` (${sessionID})` : ""}`;
+      }
+
+      if (message === undefined) return;
+
+      try {
+        await sendTelegramMessage(token, chatId, message);
+      } catch (err) {
+        await client.app.log({
+          body: {
+            service: "telegram-notification",
+            level: "error",
+            message: `Failed to send Telegram notification: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        });
+      }
+    },
+  };
+};
+
+export default plugin;
