@@ -1,6 +1,6 @@
 {
   "name": "opencode-telegram-notification",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenCode plugin that sends Telegram notifications on session idle, permission requests, and errors",
   "type": "module",
   "main": "dist/index.js",
@@ -11,8 +11,15 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
-  "keywords": ["opencode", "plugin", "telegram", "notification"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "opencode",
+    "plugin",
+    "telegram",
+    "notification"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node && tsc --emitDeclarationOnly --noEmit false --outDir dist",
