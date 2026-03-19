@@ -2,17 +2,30 @@ import type { Plugin } from "@opencode-ai/plugin";
 
 const TELEGRAM_MAX_LENGTH = 4096;
 
+function escapeMarkdownV2(text: string): string {
+	return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
+}
+
+function escapeMarkdownV2Code(text: string): string {
+	return text.replace(/([`\\])/g, "\\$1");
+}
+
 async function sendTelegramMessage(
 	token: string,
 	chatId: string,
 	text: string,
+	parseMode?: string,
 ): Promise<void> {
 	const truncated =
 		text.length > TELEGRAM_MAX_LENGTH
 			? text.slice(0, TELEGRAM_MAX_LENGTH)
 			: text;
 	const url = `https://api.telegram.org/bot${token}/sendMessage`;
-	const body = JSON.stringify({ chat_id: chatId, text: truncated });
+	const payload: Record<string, string> = { chat_id: chatId, text: truncated };
+	if (parseMode) {
+		payload.parse_mode = parseMode;
+	}
+	const body = JSON.stringify(payload);
 
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const response = await fetch(url, {
@@ -124,10 +137,13 @@ const plugin: Plugin = async ({ client }) => {
 
 			let message: string;
 
+			let parseMode: string | undefined;
+
 			if (event.type === "session.idle") {
-				message = `🔔 Session idle — waiting for input (${label})`;
+				message = `🔔 Session idle — waiting for input \\(${escapeMarkdownV2(label)}\\)`;
 				if (lastAssistantText.length > 0) {
-					message += `\n\n💬 Last response:\n${lastAssistantText}`;
+					message += `\n\n💬 Last response:\n\`\`\`\n${escapeMarkdownV2Code(lastAssistantText)}\n\`\`\``;
+					parseMode = "MarkdownV2";
 				}
 			} else if (event.type === "permission.updated") {
 				message = `⚠️ Permission requested (${label})`;
@@ -136,7 +152,7 @@ const plugin: Plugin = async ({ client }) => {
 			}
 
 			try {
-				await sendTelegramMessage(token, chatId, message);
+				await sendTelegramMessage(token, chatId, message, parseMode);
 			} catch (err) {
 				await client.app.log({
 					body: {
