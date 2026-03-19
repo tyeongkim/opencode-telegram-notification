@@ -15,7 +15,7 @@
   "keywords": ["opencode", "plugin", "telegram", "notification"],
   "license": "MIT",
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node && tsc --emitDeclarationOnly --outDir dist",
+    "build": "bun build src/index.ts --outdir dist --target node && tsc --emitDeclarationOnly --noEmit false --outDir dist",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run typecheck && bun run build"
   },
