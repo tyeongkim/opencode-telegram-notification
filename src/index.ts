@@ -63,14 +63,19 @@ const plugin: Plugin = async ({ client }) => {
 
 	return {
 		event: async ({ event }) => {
+			const eventType = event.type as string;
 			let sessionID: string | undefined;
 
-			if (event.type === "session.idle") {
-				sessionID = event.properties.sessionID;
-			} else if (event.type === "permission.updated") {
-				sessionID = event.properties.sessionID;
-			} else if (event.type === "session.error") {
-				sessionID = event.properties.sessionID;
+			const props = event.properties as { sessionID?: string };
+
+			if (eventType === "session.idle") {
+				sessionID = props.sessionID;
+			} else if (eventType === "permission.updated") {
+				sessionID = props.sessionID;
+			} else if (eventType === "session.error") {
+				sessionID = props.sessionID;
+			} else if (eventType === "question.asked") {
+				sessionID = props.sessionID;
 			} else {
 				return;
 			}
@@ -99,7 +104,7 @@ const plugin: Plugin = async ({ client }) => {
 			}
 
 			let lastAssistantText = "";
-			if (sessionID && event.type === "session.idle") {
+			if (sessionID && eventType === "session.idle") {
 				try {
 					const messagesRes = await client.session.messages({
 						path: { id: sessionID },
@@ -139,14 +144,16 @@ const plugin: Plugin = async ({ client }) => {
 
 			let parseMode: string | undefined;
 
-			if (event.type === "session.idle") {
+			if (eventType === "session.idle") {
 				message = `🔔 Session idle — waiting for input \\(${escapeMarkdownV2(label)}\\)`;
 				if (lastAssistantText.length > 0) {
 					message += `\n\n💬 Last response:\n\`\`\`\n${escapeMarkdownV2Code(lastAssistantText)}\n\`\`\``;
 					parseMode = "MarkdownV2";
 				}
-			} else if (event.type === "permission.updated") {
+			} else if (eventType === "permission.updated") {
 				message = `⚠️ Permission requested (${label})`;
+			} else if (eventType === "question.asked") {
+				message = `❓ Question asked — needs your answer (${label})`;
 			} else {
 				message = `❌ Session error (${label})`;
 			}
