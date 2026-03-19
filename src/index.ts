@@ -50,20 +50,47 @@ const plugin: Plugin = async ({ client }) => {
 
 	return {
 		event: async ({ event }) => {
-			const props = event.properties;
-			const sessionID = "serverID" in props ? props.serverID : undefined;
-
-			let message: string | undefined;
+			let sessionID: string | undefined;
 
 			if (event.type === "session.idle") {
-				message = `🔔 Session idle — waiting for input${sessionID ? ` (${sessionID})` : ""}`;
+				sessionID = event.properties.sessionID;
 			} else if (event.type === "permission.updated") {
-				message = `⚠️ Permission requested${sessionID ? ` (${sessionID})` : ""}`;
+				sessionID = event.properties.sessionID;
 			} else if (event.type === "session.error") {
-				message = `❌ Session error${sessionID ? ` (${sessionID})` : ""}`;
+				sessionID = event.properties.sessionID;
+			} else {
+				return;
 			}
 
-			if (message === undefined) return;
+			let label = sessionID ?? "unknown";
+			if (sessionID) {
+				try {
+					const session = await client.session.get({
+						path: { id: sessionID },
+					});
+					if (session.data?.title) {
+						label = session.data.title;
+					}
+				} catch {
+					await client.app.log({
+						body: {
+							service: "telegram-notification",
+							level: "error",
+							message: `Failed to fetch session ${sessionID} for label`,
+						},
+					});
+				}
+			}
+
+			let message: string;
+
+			if (event.type === "session.idle") {
+				message = `🔔 Session idle — waiting for input (${label})`;
+			} else if (event.type === "permission.updated") {
+				message = `⚠️ Permission requested (${label})`;
+			} else {
+				message = `❌ Session error (${label})`;
+			}
 
 			try {
 				await sendTelegramMessage(token, chatId, message);
