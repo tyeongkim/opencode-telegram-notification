@@ -30,8 +30,8 @@ Then add the plugin to your `opencode.json`:
 
 | Variable | Required | Description |
 |---|---|---|
-| `TELEGRAM_BOT_TOKEN` | Yes | Bot token from BotFather |
-| `TELEGRAM_CHAT_ID` | Yes | Chat ID to send notifications to |
+| `OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN` | Yes | Bot token from BotFather |
+| `OPENCODE_NOTIFICATION_TELEGRAM_CHAT_ID` | Yes | Chat ID to send notifications to |
 
 Set these in your shell or `.env` file before running OpenCode.
 

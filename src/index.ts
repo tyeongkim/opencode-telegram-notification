@@ -32,8 +32,8 @@ async function sendTelegramMessage(
 }
 
 const plugin: Plugin = async ({ client }) => {
-	const token = process.env["TELEGRAM_BOT_TOKEN"];
-	const chatId = process.env["TELEGRAM_CHAT_ID"];
+	const token = process.env.OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN;
+	const chatId = process.env.OPENCODE_NOTIFICATION_TELEGRAM_CHAT_ID;
 
 	if (!token || !chatId) {
 		await client.app.log({
@@ -41,7 +41,7 @@ const plugin: Plugin = async ({ client }) => {
 				service: "telegram-notification",
 				level: "warn",
 				message:
-					"TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — notifications disabled",
+					"OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN or OPENCODE_NOTIFICATION_TELEGRAM_CHAT_ID not set — notifications disabled",
 			},
 		});
 
@@ -50,8 +50,8 @@ const plugin: Plugin = async ({ client }) => {
 
 	return {
 		event: async ({ event }) => {
-			const props = event.properties as Record<string, unknown>;
-			const sessionID = props?.sessionID as string | undefined;
+			const props = event.properties;
+			const sessionID = "serverID" in props ? props.serverID : undefined;
 
 			let message: string | undefined;
 
