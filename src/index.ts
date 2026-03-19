@@ -68,6 +68,9 @@ const plugin: Plugin = async ({ client }) => {
 					const session = await client.session.get({
 						path: { id: sessionID },
 					});
+					if (session.data?.parentID) {
+						return;
+					}
 					if (session.data?.title) {
 						label = session.data.title;
 					}
