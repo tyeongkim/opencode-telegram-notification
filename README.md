@@ -1,6 +1,6 @@
 # opencode-telegram-notification
 
-OpenCode plugin that sends Telegram notifications when the LLM completes work, requests permission, or encounters an error.
+OpenCode plugin that sends Telegram notifications via LLM tool calls and critical event hooks.
 
 ## Installation
 
@@ -18,30 +18,56 @@ Then add the plugin to your `opencode.json`:
 }
 ```
 
-## Create a Telegram Bot
+## Setup
+
+### 1. Create a Telegram Bot
 
 1. Open Telegram and search for `@BotFather`
 2. Send `/newbot` and follow the prompts
 3. Copy the bot token BotFather gives you
-4. Send any message to your new bot
-5. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` in your browser and find your `chat_id` in the response
+
+### 2. Set the Bot Token
+
+```sh
+export OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN="your-bot-token"
+```
+
+### 3. Send a Message to Your Bot
+
+Open your bot in Telegram and send any message (e.g. "hello"). The plugin will automatically detect your `chat_id` on startup.
+
+That's it! When OpenCode starts, you'll receive a "✅ OpenCode Telegram notifications connected!" message confirming everything works.
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN` | Yes | Bot token from BotFather |
-| `OPENCODE_NOTIFICATION_TELEGRAM_CHAT_ID` | Yes | Chat ID to send notifications to |
+| `OPENCODE_NOTIFICATION_TELEGRAM_CHAT_ID` | No | Chat ID (auto-detected if not set) |
 
-Set these in your shell or `.env` file before running OpenCode.
+## How It Works
 
-## Events
+### Tool: `send_notification`
 
-The plugin listens for three events:
+The plugin registers a `send_notification` tool that the LLM can call to send you a Telegram message. The LLM decides when to notify you — typically after completing a significant task or when it has important information you should see while away.
 
-- `session.idle` — LLM finished working, waiting for your input
-- `permission.asked` — LLM needs your permission to proceed
+**Urgency levels:**
+
+| Level | Behavior |
+|---|---|
+| `low` | Silent notification (no sound) |
+| `normal` | Default notification |
+| `high` | Ensures notification sound |
+
+### Event-Based Notifications
+
+The plugin automatically sends notifications for critical events:
+
+- `permission.updated` — LLM needs your permission to proceed
+- `question.asked` — LLM asked a question that needs your answer
 - `session.error` — Session encountered an error
+
+Duplicate notifications for the same event within 10 seconds are suppressed. Notifications from child sessions (subagents) are filtered out.
 
 ## License
 
