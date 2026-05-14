@@ -1,6 +1,6 @@
 # opencode-telegram-notification
 
-OpenCode plugin that sends Telegram notifications via LLM tool calls and critical event hooks.
+OpenCode plugin that sends Telegram notifications via LLM tool calls and critical event hooks, with bidirectional reply support.
 
 ## Installation
 
@@ -36,7 +36,7 @@ export OPENCODE_NOTIFICATION_TELEGRAM_BOT_TOKEN="your-bot-token"
 
 Open your bot in Telegram and send any message (e.g. "hello"). The plugin will automatically detect your `chat_id` on startup.
 
-That's it! When OpenCode starts, you'll receive a "✅ OpenCode Telegram notifications connected!" message confirming everything works.
+That's it! The plugin will start sending notifications and listening for your replies.
 
 ## Environment Variables
 
@@ -68,6 +68,21 @@ The plugin automatically sends notifications for critical events:
 - `session.error` — Session encountered an error
 
 Duplicate notifications for the same event within 10 seconds are suppressed. Notifications from child sessions (subagents) are filtered out.
+
+### Reply-to-Prompt
+
+Reply to any bot notification in Telegram and your message will be injected as a prompt into the corresponding OpenCode session. The agent will process your request and send the result back via notification.
+
+- Reply is confirmed with a 👍 reaction on your message
+- If the reply fails, a 👎 reaction is shown instead
+- The agent is instructed to notify you of the result since you're away from the terminal
+- Messages sent directly in the terminal are not affected
+
+This creates a bidirectional loop: notification → reply → agent processes → notification → reply...
+
+### Polling
+
+The plugin uses Telegram long-polling (`getUpdates` with 30s timeout) to listen for replies. This runs in the background with minimal resource usage. Polling stops automatically after 3 consecutive failures.
 
 ## License
 
