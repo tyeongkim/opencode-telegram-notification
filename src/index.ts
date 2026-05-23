@@ -139,8 +139,6 @@ const plugin: Plugin = async ({ client }) => {
 
       if (eventType === "permission.updated") {
         sessionID = props.sessionID;
-      } else if (eventType === "session.error") {
-        sessionID = props.sessionID;
       } else if (eventType === "question.asked") {
         sessionID = props.sessionID;
       } else {
@@ -186,10 +184,8 @@ const plugin: Plugin = async ({ client }) => {
 
       if (eventType === "permission.updated") {
         message = `⚠️ Permission requested (${label})`;
-      } else if (eventType === "question.asked") {
-        message = `❓ Question asked — needs your answer (${label})`;
       } else {
-        message = `❌ Session error (${label})`;
+        message = `❓ Question asked — needs your answer (${label})`;
       }
 
       try {
